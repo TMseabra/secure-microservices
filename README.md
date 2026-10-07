@@ -1,53 +1,53 @@
 # secure-microservices
 
-Microserviços em Go com autorização separada e deploy seguro em Kubernetes. Projeto sobre segurança entre serviços: quem emite tokens, quem os valida e quem pode falar com quem.
+Go microservices with separated authorization and a secure Kubernetes deployment. A project about security between services: who issues tokens, who validates them and who is allowed to talk to whom.
 
-> Estado: em planeamento (projeto de portefólio). Vem depois do [auth-api](https://github.com/TMseabra/auth-api) e do [auth-lab](https://github.com/TMseabra/auth-lab).
+> Status: planning (portfolio project). Comes after [auth-api](https://github.com/TMseabra/auth-api) and [auth-lab](https://github.com/TMseabra/auth-lab).
 
-## Objetivo
+## Goal
 
-Separar a emissão de identidade da proteção dos dados, e mostrar como se protege um sistema com vários serviços, do código ao cluster.
+Separate identity issuance from data protection, and show how to secure a multi-service system from the code to the cluster.
 
-## Serviços (monorepo)
+## Services (monorepo)
 
-- auth-service: emite e renova tokens JWT
-- api-service: dados protegidos; valida o JWT e aplica RBAC por papel
-- gateway (opcional): ponto de entrada único
+- auth-service: issues and refreshes JWT tokens
+- api-service: protected data; validates the JWT and enforces role-based access control (RBAC)
+- gateway (optional): single entry point
 
-Cada serviço fica na sua pasta, com os manifestos Kubernetes e uma só pipeline com matriz de serviços.
+Each service lives in its own folder, with its Kubernetes manifests and a single pipeline with a service matrix.
 
 ## Stack
 
 - Go
-- Docker e docker-compose
-- Kubernetes local (kind ou minikube)
-- GitHub Actions, Dependabot e Trivy
+- Docker and docker-compose
+- Local Kubernetes (kind or minikube)
+- GitHub Actions, Dependabot and Trivy
 
-## Plano
+## Plan
 
-### Construir
+### Build
 
-1. auth-service e api-service a funcionar com docker-compose
-2. api-service a validar o JWT e a aplicar RBAC por papel
-3. gateway à frente dos serviços (opcional)
+1. auth-service and api-service running with docker-compose
+2. api-service validating the JWT and enforcing RBAC by role
+3. gateway in front of the services (optional)
 
-### Proteger
+### Secure
 
-4. Dependabot e Trivy em todos os serviços (pipeline com matriz)
-5. Deploy no cluster local com Kubernetes
-6. Secrets do Kubernetes para as chaves
-7. NetworkPolicy: só o gateway fala com o auth-service
-8. Contentores sem root
-9. Scan dos manifestos com trivy config
+4. Dependabot and Trivy on every service (matrix pipeline)
+5. Deploy to a local cluster with Kubernetes
+6. Kubernetes Secrets for the keys
+7. NetworkPolicy: only the gateway can talk to the auth-service
+8. Non-root containers
+9. Scan the manifests with trivy config
 
-## Decisões de segurança
+## Security decisions
 
-A preencher à medida que o projeto avança.
+To be filled in as the project progresses.
 
-## Como correr
+## How to run
 
-A preencher quando existir o docker-compose.
+To be filled in once docker-compose exists.
 
-## Licença
+## License
 
 MIT
