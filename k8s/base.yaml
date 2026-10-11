@@ -1,0 +1,175 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: secure-microservices
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+  namespace: secure-microservices
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: auth-service}
+  template:
+    metadata:
+      labels: {app: auth-service}
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: auth-service
+          image: secure-microservices/auth-service:local
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: JWT_PRIVATE_KEY_FILE
+              value: /keys/private.pem
+            - name: AUTH_USERS
+              valueFrom:
+                secretKeyRef: {name: auth-users, key: users}
+          volumeMounts:
+            - {name: jwt-private-key, mountPath: /keys, readOnly: true}
+          readinessProbe:
+            httpGet: {path: /health, port: 8080}
+          livenessProbe:
+            httpGet: {path: /health, port: 8080}
+          resources:
+            requests: {cpu: 50m, memory: 32Mi}
+            limits: {cpu: 250m, memory: 128Mi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+      volumes:
+        - name: jwt-private-key
+          secret:
+            secretName: jwt-private-key
+            defaultMode: 0440
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-service
+  namespace: secure-microservices
+spec:
+  selector: {app: auth-service}
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-service
+  namespace: secure-microservices
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: api-service}
+  template:
+    metadata:
+      labels: {app: api-service}
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: api-service
+          image: secure-microservices/api-service:local
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8081
+          env:
+            - name: JWT_PUBLIC_KEY_FILE
+              value: /keys/public.pem
+          volumeMounts:
+            - {name: jwt-public-key, mountPath: /keys, readOnly: true}
+          readinessProbe:
+            httpGet: {path: /health, port: 8081}
+          livenessProbe:
+            httpGet: {path: /health, port: 8081}
+          resources:
+            requests: {cpu: 50m, memory: 32Mi}
+            limits: {cpu: 250m, memory: 128Mi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+      volumes:
+        - name: jwt-public-key
+          secret:
+            secretName: jwt-public-key
+            defaultMode: 0440
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-service
+  namespace: secure-microservices
+spec:
+  selector: {app: api-service}
+  ports:
+    - port: 8081
+      targetPort: 8081
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+  namespace: secure-microservices
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: gateway}
+  template:
+    metadata:
+      labels: {app: gateway}
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: gateway
+          image: secure-microservices/gateway:local
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          readinessProbe:
+            httpGet: {path: /health, port: 8000}
+          livenessProbe:
+            httpGet: {path: /health, port: 8000}
+          resources:
+            requests: {cpu: 50m, memory: 32Mi}
+            limits: {cpu: 250m, memory: 128Mi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway
+  namespace: secure-microservices
+spec:
+  selector: {app: gateway}
+  ports:
+    - port: 8000
+      targetPort: 8000

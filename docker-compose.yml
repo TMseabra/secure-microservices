@@ -1,0 +1,37 @@
+services:
+  auth-service:
+    build: ./auth-service
+    environment:
+      JWT_PRIVATE_KEY_FILE: /keys/private.pem
+      AUTH_USERS: ${AUTH_USERS:-alice:alice-pass:admin,bob:bob-pass:user}
+    volumes:
+      - ./keys/private.pem:/keys/private.pem:ro
+    networks: [internal]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+
+  api-service:
+    build: ./api-service
+    environment:
+      JWT_PUBLIC_KEY_FILE: /keys/public.pem
+    volumes:
+      - ./keys/public.pem:/keys/public.pem:ro
+    networks: [internal]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+
+  gateway:
+    build: ./gateway
+    ports:
+      - "8000:8000"
+    depends_on: [auth-service, api-service]
+    networks: [internal]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+
+# Only the gateway publishes a port; the services are reachable just inside this network.
+networks:
+  internal: {}

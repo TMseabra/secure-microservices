@@ -1,0 +1,57 @@
+# Default deny: no pod in the namespace accepts traffic unless a policy below allows it.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: secure-microservices
+spec:
+  podSelector: {}
+  policyTypes: [Ingress]
+---
+# Only the gateway can talk to the auth-service.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: auth-service-from-gateway
+  namespace: secure-microservices
+spec:
+  podSelector:
+    matchLabels: {app: auth-service}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels: {app: gateway}
+      ports:
+        - port: 8080
+---
+# Only the gateway can talk to the api-service.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: api-service-from-gateway
+  namespace: secure-microservices
+spec:
+  podSelector:
+    matchLabels: {app: api-service}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels: {app: gateway}
+      ports:
+        - port: 8081
+---
+# The gateway is the single entry point.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: gateway-ingress
+  namespace: secure-microservices
+spec:
+  podSelector:
+    matchLabels: {app: gateway}
+  policyTypes: [Ingress]
+  ingress:
+    - ports:
+        - port: 8000
